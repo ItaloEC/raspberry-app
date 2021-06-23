@@ -39,7 +39,7 @@ app.get("/setport", (req, res) => {
   config.choosenPort = choosenPort;
 
   // convert JSON object to string
-  const data = JSON.stringify(config);
+  const data = JSON.stringify(config, null, 4);
 
   fs.writeFile("config.json", data, (err) => {
     if (err) {
@@ -55,7 +55,7 @@ app.get("/setipserver", (req, res) => {
   config.ipServer = ipserver;
 
   // convert JSON object to string
-  const data = JSON.stringify(config);
+  const data = JSON.stringify(config, null, 4);
 
   fs.writeFile("config.json", data, (err) => {
     if (err) {
