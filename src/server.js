@@ -4,22 +4,49 @@ const fs = require("fs");
 var cors = require("cors");
 const fakeWeight = require("./utils/fakeWeight");
 const SerialPort = require("serialport");
-const config = require("./modules/config");
+var http = require("http").createServer(app);
+var io = require("socket.io")(http);
+const Readline = require("@serialport/parser-readline");
+const parser = new Readline();
+
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  next();
+});
+
+io.on("connection", (socket) => {
+  /* socket object may be used to send specific messages to the new connected client */
+
+  console.log(
+    "************************************************************new client connected"
+  );
+
+  // setTimeout(() => {
+  //   setInterval(() => {
+  //     socket.emit("weight", { weight: fakeWeight() });
+  //   }, 500);
+  // }, 100);
+});
+
+console.log("aquiiiiiiiiiiiiiiii");
+
+const bodyParser = require("body-parser");
+const { get } = require("http");
 
 const port = 3001;
 
-var choosenPort = "Bluetooth-Incoming-Port";
-
 app.use(cors());
+app.use(bodyParser.json());
 
 app.use(express.static("build"));
 
 app.get("/serialportlist", async (req, res) => {
-  console.log(`SerialPort.list()`, await SerialPort.list());
+  // console.log(`SerialPort.list()`, await SerialPort.list());
   let list = await SerialPort.list();
 
   let names = list.map((port) => {
-    return port.path.replace("/dev/tty.", "");
+    // return port.path.replace("/dev/tty.", "");
+    return port.path;
   });
 
   console.log(`list`, names);
@@ -33,10 +60,12 @@ app.get("/serialportlist", async (req, res) => {
   '/dev/tty.wireless-JL_SPP'
 */
 
-app.get("/setport", (req, res) => {
-  choosenPort = req.params.port;
+app.post("/setname", (req, res) => {
+  let config = require("./config.json");
 
-  config.choosenPort = choosenPort;
+  let name = req.body.name;
+
+  config.name = name;
 
   // convert JSON object to string
   const data = JSON.stringify(config, null, 4);
@@ -49,10 +78,45 @@ app.get("/setport", (req, res) => {
   });
 });
 
-app.get("/setipserver", (req, res) => {
-  ipserver = req.params.port;
+app.post("/setport", (req, res) => {
+  let config = require("./config.json");
 
-  config.ipServer = ipserver;
+  let choosenPort = req.body.choosenPort;
+
+  config.choosenPort = choosenPort;
+
+  // convert JSON object to string
+  const data = JSON.stringify(config, null, 4);
+
+  fs.writeFile("config.json", data, (err) => {
+    if (err) {
+      console.log(`err`, err);
+    }
+    console.log("\n\n\nJSON data is saved.");
+  });
+
+  const serialPort = new SerialPort(choosenPort, {
+    baudRate: 2400,
+    parity: "none",
+    stopBits: 1,
+    size: 16,
+  });
+  serialPort.pipe(parser);
+  let value = "";
+  serialPort.on("data", function (data) {
+    //console.log("Data:", data.toString());
+    value.length == 16
+      ? socket.emit("weight", { weight: +value.substring(3, 9).toFixed(2) })
+      : (value += data.toString());
+  });
+});
+
+app.post("/setipserver", (req, res) => {
+  let config = require("./config.json");
+
+  let ipServer = req.body.ipServer;
+
+  config.ipServer = ipServer;
 
   // convert JSON object to string
   const data = JSON.stringify(config, null, 4);
@@ -74,6 +138,6 @@ app.get("/weight", (req, res) => {
   res.send({ weight: fakeWeight() }).status(200);
 });
 
-app.listen(port, () => {
+http.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`);
 });
