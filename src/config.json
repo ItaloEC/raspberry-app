@@ -1,5 +1,5 @@
 {
-    "name": "Balança 3",
-    "ipServer": "123.123.123.1",
-    "choosenPort": "COM"
+  "name": "Balança 3",
+  "ipServer": "localhost",
+  "choosenPort": "/dev/ttyS0"
 }
