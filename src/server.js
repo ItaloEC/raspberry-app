@@ -9,6 +9,8 @@ var io = require("socket.io")(http);
 const Readline = require("@serialport/parser-readline");
 const parser = new Readline();
 
+var socketGlobal;
+
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   next();
@@ -21,6 +23,8 @@ io.on("connection", (socket) => {
     "************************************************************new client connected"
   );
 
+  socketGlobal = socket;
+
   // setTimeout(() => {
   //   setInterval(() => {
   //     socket.emit("weight", { weight: fakeWeight() });
@@ -28,7 +32,7 @@ io.on("connection", (socket) => {
   // }, 100);
 });
 
-console.log("aquiiiiiiiiiiiiiiii");
+// console.log("aquiiiiiiiiiiiiiiii");
 
 const bodyParser = require("body-parser");
 const { get } = require("http");
