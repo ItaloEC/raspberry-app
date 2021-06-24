@@ -10,6 +10,7 @@ const Readline = require("@serialport/parser-readline");
 const parser = new Readline();
 let config = require("./config.json");
 var socketGlobal;
+var pesoGlobal = "";
 
 const serialPort = new SerialPort(config.choosenPort, {
   baudRate: 2400,
@@ -24,16 +25,21 @@ app.use((req, res, next) => {
   next();
 });
 
+setInterval(() => {
+  socketGlobal?.emit("weight", { weight: pesoGlobal ? pesoGlobal : "-1" });
+}, 5000);
+
 io.on("connection", (socket) => {
   /* socket object may be used to send specific messages to the new connected client */
 
   console.log("******************************************new client connected");
+  socketGlobal = socket;
 
   let value = "";
   serialPort.on("data", function (data) {
     //console.log("Data:", data.toString());
     value.length == 16
-      ? socket.emit("weight", { weight: value.substring(3, 9) })
+      ? (pesoGlobal = value.substring(3, 9))
       : (value += data.toString());
   });
 });
