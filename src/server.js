@@ -33,7 +33,7 @@ io.on("connection", (socket) => {
   serialPort.on("data", function (data) {
     //console.log("Data:", data.toString());
     value.length == 16
-      ? socketGlobal?.emit("weight", { weight: value.substring(3, 9) })
+      ? socket.emit("weight", { weight: value.substring(3, 9) })
       : (value += data.toString());
   });
 });
