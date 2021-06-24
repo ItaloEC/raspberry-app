@@ -41,7 +41,7 @@ io.on("connection", (socket) => {
   serialPort.on("data", function (data) {
     //console.log("Data:", data.toString());
     value.length == 16
-      ? (pesoGlobal = value.substring(3, 9))
+      ? (pesoGlobal = value.substring(2, 9))
       : (value += data.toString());
   });
 });
