@@ -30,7 +30,7 @@ setInterval(() => {
   console.log("obj keys length", Object.keys(socketGlobal).length);
   console.log(`pesoGlobal`, pesoGlobal);
 }, 5000);
-
+console.log("\n\n\n\n`=  10.255B0`0F", "`, =  10.255B0`0F".substring(5, 12));
 io.on("connection", (socket) => {
   /* socket object may be used to send specific messages to the new connected client */
 
