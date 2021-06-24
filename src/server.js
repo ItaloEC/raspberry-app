@@ -27,6 +27,7 @@ app.use((req, res, next) => {
 
 setInterval(() => {
   socketGlobal?.emit("weight", { weight: pesoGlobal ? pesoGlobal : "-1" });
+  console.log(`pesoGlobal`, pesoGlobal);
 }, 5000);
 
 io.on("connection", (socket) => {
