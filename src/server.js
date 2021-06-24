@@ -97,28 +97,29 @@ app.post("/setport", (req, res) => {
 
   // convert JSON object to string
   const data = JSON.stringify(config, null, 4);
+  console.log(`data`, data);
 
-  fs.writeFile("config.json", data, (err) => {
-    if (err) {
-      console.log(`err`, err);
-    }
-    console.log("\n\n\nJSON data is saved.");
-  });
+  // fs.writeFile("config.json", data, (err) => {
+  //   if (err) {
+  //     console.log(`err`, err);
+  //   }
+  //   console.log("\n\n\nJSON data is saved.");
+  // });
 
-  const serialPort = new SerialPort(choosenPort, {
-    baudRate: 2400,
-    parity: "none",
-    stopBits: 1,
-    size: 16,
-  });
-  serialPort.pipe(parser);
-  let value = "";
-  serialPort.on("data", function (data) {
-    //console.log("Data:", data.toString());
-    value.length == 16
-      ? socketGlobal?.emit("weight", { weight: value.substring(3, 9) })
-      : (value += data.toString());
-  });
+  // const serialPort = new SerialPort(choosenPort, {
+  //   baudRate: 2400,
+  //   parity: "none",
+  //   stopBits: 1,
+  //   size: 16,
+  // });
+  // serialPort.pipe(parser);
+  // let value = "";
+  // serialPort.on("data", function (data) {
+  //   //console.log("Data:", data.toString());
+  //   value.length == 16
+  //     ? socketGlobal?.emit("weight", { weight: value.substring(3, 9) })
+  //     : (value += data.toString());
+  // });
 });
 
 app.post("/setipserver", (req, res) => {
