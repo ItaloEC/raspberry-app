@@ -1,5 +1,6 @@
 {
-  "name": "Balança 3",
-  "ipServer": "localhost",
-  "choosenPort": "/dev/ttyS0"
+  "scaleName": "Balança 100",
+  "ipServer": "http://localhost",
+  "choosenPort": "/dev/ttyS0",
+  "environment": "dev"
 }

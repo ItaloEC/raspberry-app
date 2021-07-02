@@ -1,5 +1,5 @@
 function fakeWeight() {
-  let weight = Math.random() * 10;
+  let weight = Math.random() * 100;
   return weight.toFixed(2);
 }
 

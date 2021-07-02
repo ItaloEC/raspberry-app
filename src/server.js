@@ -11,14 +11,26 @@ const parser = new Readline();
 let config = require("./config.json");
 var socketGlobal;
 var pesoGlobal = "";
+const socketClient = require("socket.io-client");
+var socketServer = socketClient("http://localhost:3005");
 
-const serialPort = new SerialPort(config.choosenPort, {
-  baudRate: 2400,
-  parity: "none",
-  stopBits: 1,
-  size: 16,
+const port = 3010;
+
+socketServer.on("connection", (socket) => {
+  console.log(`config.scaleName`, config.scaleName);
+  console.log(`socket.id`, socket.id);
+  console.log("connected socket server", socket.connected);
 });
-serialPort.pipe(parser);
+
+if (config.environment !== "dev") {
+  const serialPort = new SerialPort(config.choosenPort, {
+    baudRate: 2400,
+    parity: "none",
+    stopBits: 1,
+    size: 16,
+  });
+  serialPort.pipe(parser);
+}
 
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -26,11 +38,22 @@ app.use((req, res, next) => {
 });
 
 setInterval(() => {
-  socketGlobal?.emit("weight", { weight: pesoGlobal ? pesoGlobal : "-1" });
-  console.log("obj keys length", Object.keys(socketGlobal).length);
-  console.log(`pesoGlobal`, pesoGlobal);
-}, 5000);
-console.log("\n\n\n\n`=  10.255B0`0F", "`, =  10.255B0`0F".substring(5, 12));
+  // console.log(socketServer.connected);
+  config.environment === "dev"
+    ? (() => {
+        let peso = fakeWeight();
+        socketGlobal?.emit("weight", { weight: peso });
+        socketServer.emit("weight-server", { ...config, weight: peso });
+      })()
+    : (() => {
+        let peso = fakeWeight();
+        socketGlobal?.emit("weight", {
+          weight: pesoGlobal ? pesoGlobal : "0.00",
+        });
+        socketServer.emit("weight-server", { ...config, weight: peso });
+      })();
+}, 1000);
+// console.log("\n\n\n\n`=  10.255B0`0F", "`, =  10.255B0`0F".substring(5, 12));
 io.on("connection", (socket) => {
   /* socket object may be used to send specific messages to the new connected client */
 
@@ -38,96 +61,52 @@ io.on("connection", (socket) => {
   socketGlobal = socket;
 
   let value = "";
-  serialPort.on("data", function (data) {
-    //console.log("Data:", data.toString());
-    value.length == 16
-      ? (pesoGlobal = value.substring(2, 9))
-      : (value += data.toString());
-  });
+  if (config.environment !== "dev") {
+    serialPort.on("data", function (data) {
+      //console.log("Data:", data.toString());
+      value.length == 16
+        ? (pesoGlobal = value.substring(2, 9))
+        : (value += data.toString());
+    });
+  }
 });
 
-// console.log("aquiiiiiiiiiiiiiiii");
-
 const bodyParser = require("body-parser");
-const { get } = require("http");
-
-const port = 3001;
 
 app.use(cors());
 app.use(bodyParser.json());
 
 app.use(express.static("build"));
 
-app.get("/serialportlist", async (req, res) => {
-  // console.log(`SerialPort.list()`, await SerialPort.list());
-  let list = await SerialPort.list();
-
-  let names = list.map((port) => {
-    // return port.path.replace("/dev/tty.", "");
-    return port.path;
-  });
-
-  console.log(`list`, names);
-  res.send({ list: names }).status(200);
-});
-
-/*
-  '/dev/tty.debug-console',
-  '/dev/tty.wlan-debug',
-  '/dev/tty.Bluetooth-Incoming-Port',
-  '/dev/tty.wireless-JL_SPP'
-*/
-
 app.post("/setname", (req, res) => {
   let config = require("./config.json");
 
-  let name = req.body.name;
+  let scaleName = req.body.scaleName;
+  console.log(`scaleName`, scaleName);
 
-  config.name = name;
+  config.scaleName = scaleName;
 
-  // convert JSON object to string
   const data = JSON.stringify(config, null, 4);
 
-  fs.writeFile("config.json", data, (err) => {
+  fs.writeFile("src/config.json", data, (err) => {
     if (err) {
       console.log(`err`, err);
     }
     console.log("JSON data is saved.");
+    res.send({ scaleName }).status(200);
   });
 });
 
-app.post("/setport", (req, res) => {
+app.get("/getname", (req, res) => {
   let config = require("./config.json");
 
-  let choosenPort = req.body.choosenPort;
+  res.send({ scaleName: config.scaleName }).status(200);
+});
 
-  config.choosenPort = choosenPort;
+app.get("/getipserver", (req, res) => {
+  let config = require("./config.json");
 
-  // convert JSON object to string
-  const data = JSON.stringify(config, null, 4);
-  console.log(`data`, data);
-
-  // fs.writeFile("config.json", data, (err) => {
-  //   if (err) {
-  //     console.log(`err`, err);
-  //   }
-  //   console.log("\n\n\nJSON data is saved.");
-  // });
-
-  // const serialPort = new SerialPort(choosenPort, {
-  //   baudRate: 2400,
-  //   parity: "none",
-  //   stopBits: 1,
-  //   size: 16,
-  // });
-  // serialPort.pipe(parser);
-  // let value = "";
-  // serialPort.on("data", function (data) {
-  //   //console.log("Data:", data.toString());
-  //   value.length == 16
-  //     ? socketGlobal?.emit("weight", { weight: value.substring(3, 9) })
-  //     : (value += data.toString());
-  // });
+  res.send({ ipServer: config.ipServer }).status(200);
 });
 
 app.post("/setipserver", (req, res) => {
@@ -137,7 +116,6 @@ app.post("/setipserver", (req, res) => {
 
   config.ipServer = ipServer;
 
-  // convert JSON object to string
   const data = JSON.stringify(config, null, 4);
 
   fs.writeFile("config.json", data, (err) => {
@@ -146,15 +124,7 @@ app.post("/setipserver", (req, res) => {
     }
     console.log("JSON data is saved.");
   });
-});
-
-app.get("/weight", (req, res) => {
-  const serialPort = new SerialPort(choosenPort, { baudRate: 256000 });
-  serialPort.on("data", function (data) {
-    console.log("Data:", data);
-  });
-
-  res.send({ weight: fakeWeight() }).status(200);
+  res.status(200).json({ ipServer });
 });
 
 http.listen(port, () => {
