@@ -14,7 +14,7 @@ var pesoGlobal = "";
 const socketClient = require("socket.io-client");
 var socketServer = socketClient("http://192.168.0.104:3005");
 
-const port = 3010;
+const port = 3000;
 
 socketServer.on("connection", (socket) => {
   console.log(`config.scaleName`, config.scaleName);
@@ -31,18 +31,18 @@ if (config.environment !== "dev") {
   });
   serialPort.pipe(parser);
 
-  
-let value = "";
-// if (config.environment !== "dev") {
+
+  let value = "";
+  // if (config.environment !== "dev") {
   console.log('entrou');
   serialPort.on("data", function (data) {
     console.log("Data:", data.toString());
-  //   value.length == 16
-  //     ? (pesoGlobal = value.substring(2, 9))
-  //     : (value += data.toString());
-  pesoGlobal = data.toString().substring(2, 3) + ',' + data.toString().substring(3, 6)
+    //   value.length == 16
+    //     ? (pesoGlobal = value.substring(2, 9))
+    //     : (value += data.toString());
+    pesoGlobal = data.toString().substring(2, 3) + ',' + data.toString().substring(3, 5) + ' KG'
   });
-// }
+  // }
 }
 
 app.use((req, res, next) => {
@@ -59,11 +59,16 @@ setInterval(() => {
       socketServer.emit("weight-server", { ...config, weight: peso });
     })()
     : (() => {
-     console.log('peso global ===>', pesoGlobal);
+      console.log('peso global ===>', pesoGlobal);
       socketGlobal?.emit("weight", {
-        weight: pesoGlobal ? pesoGlobal : "0.00",
+        weight: pesoGlobal ? pesoGlobal : "0.00 KG",
       });
-      socketServer.emit("weight-server", { ...config, weight:  pesoGlobal ? pesoGlobal : "Balanza conectada a la puerta incorrecta", });
+      socketServer.emit("weight-server", { 
+        ...config,
+        weight: pesoGlobal ? 
+        pesoGlobal : 
+        "Balanza conectada a la puerta incorrecta"
+       });
     })();
 }, 1000);
 
