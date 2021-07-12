@@ -1,5 +1,5 @@
 {
-  "scaleName": "Balança 100",
+  "scaleName": "Mac",
   "ipServer": "http://localhost",
   "choosenPort": "/dev/ttyS0",
   "environment": "dev"
